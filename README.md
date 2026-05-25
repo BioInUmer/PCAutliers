@@ -12,7 +12,7 @@
 
 ## Purpose
 
-This repository currently contains the [PCA-Outlier](https://bioinumer.github.io/PCA-Outliers/) Pipeline with a real-world example. The document demonstrates a reproducible workflow to project Study samples onto the 1000 Genomes reference space and filter population Outliers before Imputation or Genome-Wide Association Studies.
+This repository currently contains the [PCA-Outlier](https://bioinumer.github.io/PCAutliers/) Pipeline with a real-world example. The document demonstrates a reproducible workflow to project Study samples onto the 1000 Genomes reference space and filter population Outliers before Imputation or Genome-Wide Association Studies.
 
 ## Future Development
 
