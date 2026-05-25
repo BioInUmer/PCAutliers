@@ -1,5 +1,5 @@
 <p align="center">
-  <!-- Insert logo here: <img width="160" alt="Logo" src="..." /> -->
+  <img width="1728" height="768" alt="Image" src="https://github.com/user-attachments/assets/bed12482-6e3a-4fed-9119-7f181e457404" />
 </p>
 
 <h1 align="center">Ancestry PCA & Outlier Detection</h1>
