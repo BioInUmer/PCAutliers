@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="1728" height="768" alt="Image" src="https://github.com/user-attachments/assets/bed12482-6e3a-4fed-9119-7f181e457404" />
+<img width="2485" height="1949" alt="Image" src="https://github.com/user-attachments/assets/df1b6a45-c727-4b0a-a84b-1b4d481399ee" />
 </p>
 
 <h1 align="center">Ancestry PCA & Outlier Detection</h1>
