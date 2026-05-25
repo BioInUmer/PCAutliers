@@ -84,7 +84,7 @@ main {
   display: block;
   width: 90%;
   height: 1px;
-  background: linear-gradient(to right, transparent, #350718ff 25%, #350718ff 75%, transparent);
+  background: linear-gradient(to right, transparent, #121213ff 25%, #121213ff 75%, transparent);
   margin: 1rem auto 0 auto;
 }
 
