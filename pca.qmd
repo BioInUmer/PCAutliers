@@ -1,0 +1,1689 @@
+---
+title: "Ancestry PCA & Outlier Detection"
+author:
+  name: "MUHAMMAD UMER"
+  url: "https://www.linkedin.com/in/muhammad-umer-hk/"
+date: "`r Sys.Date()`"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    code-summary: "Show code"
+    self-contained: true
+    theme: default
+execute:
+  warning: false
+  message: false
+  cache: true
+---
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+/* ── Base typography ──────────────────────────────────────────────────────── */
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333;
+  background-color: #fff;
+  text-align: justify;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Content width & spacing ──────────────────────────────────────────────── */
+.container-fluid, .container {
+  max-width: 820px;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+#quarto-content > * {
+  max-width: 820px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+main {
+  margin-top: 1rem;
+}
+
+/* ── Title block ──────────────────────────────────────────────────────────── */
+#title-block-header, .quarto-title-block {
+  padding-top: 2rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 3rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.quarto-title {
+  margin-bottom: 0;
+  text-align: center;
+  order: 2;
+}
+
+.title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 800;
+  -webkit-text-stroke: 0.4px currentColor;
+  font-size: 4rem;
+  color: #121213ff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-align: center !important;
+  margin-bottom: 0.5rem;
+  border-bottom: none !important;
+  display: inline-block;
+}
+
+.title::after {
+  content: "";
+  display: block;
+  width: 90%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #350718ff 25%, #350718ff 75%, transparent);
+  margin: 1rem auto 0 auto;
+}
+
+/* ── Title meta (Author & Date) ───────────────────────────────────────────── */
+.quarto-title-meta-heading {
+  display: none !important;
+}
+
+.quarto-title-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  margin-bottom: 1.5rem !important;
+  padding-top: 0;
+  border-top: none;
+  order: 1;
+}
+.quarto-title-meta-contents {
+  font-family: 'Instrument Sans', sans-serif;
+  color: #888;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
+}
+.quarto-title-meta-contents:first-of-type {
+  text-align: left;
+}
+.quarto-title-meta-contents:last-of-type {
+  text-align: right;
+}
+.quarto-title-meta-contents p {
+  margin-bottom: 0 !important;
+}
+
+/* ── Section headings ─────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Instrument Sans', sans-serif;
+  color: #413b3bff;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+h1:not(.title) {
+  font-size: 2rem !important;
+  margin-top: 2.8rem !important;
+  margin-bottom: 1rem !important;
+  padding-bottom: 0.4rem !important;
+  position: relative !important;
+  border-bottom: none !important;
+}
+h1:not(.title)::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 1px !important;
+  background: linear-gradient(to right, #e8e8e8 0%, #f4f4f4 70%, transparent 100%) !important;
+}
+
+h2 {
+  font-size: 1.7rem !important;
+  margin-top: 2.2rem !important;
+  margin-bottom: 0.8rem !important;
+  padding-bottom: 0.35rem !important;
+  position: relative !important;
+  border-bottom: none !important;
+}
+h2::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 80% !important;
+  height: 1px !important;
+  background: linear-gradient(to right, #e8e8e8 0%, #f4f4f4 80%, transparent 100%) !important;
+}
+
+h3:not(.title) {
+  font-size: 1.45rem !important;
+  margin-top: 1.6rem !important;
+  margin-bottom: 0.7rem !important;
+  padding-bottom: 0.3rem !important;
+  position: relative !important;
+  border-bottom: none !important;
+}
+h3::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 70% !important;
+  height: 1px !important;
+  background: transparent !important;
+  border-bottom: 1px dashed #d8d8d8 !important;
+}
+
+/* ── Paragraphs & lists ───────────────────────────────────────────────────── */
+p {
+  margin-bottom: 0.95rem;
+}
+
+ol, ul {
+  padding-left: 1.4rem;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+/* ── Links ─────────────────────────────────────────────────────────────────── */
+a {
+  color: #3b6ea5;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ── Blockquotes ──────────────────────────────────────────────────────────── */
+blockquote {
+  border-left: 2.5px solid #ddd;
+  padding-left: 1.1rem;
+  margin: 1.5rem 0;
+  color: #666;
+  font-style: italic;
+  font-size: 0.93rem;
+}
+
+/* ── Figures ──────────────────────────────────────────────────────────────── */
+figure,
+.quarto-figure,
+.cell-output-display {
+  margin: 0.5rem auto 2rem auto;
+  text-align: center;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+figcaption,
+.figure-caption,
+.quarto-figure-caption {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.75rem;
+  color: #999;
+  margin-top: 0.4rem;
+  text-align: center;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* ── Code blocks ──────────────────────────────────────────────────────────── */
+pre, code {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+}
+
+/* Cell wrapper */
+.cell {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+
+
+pre {
+  background-color: #f8f8f8;
+  border: none !important;
+  border-left: 2px solid #d8d8d8 !important;
+  border-radius: 0 !important;
+  padding: 0.9rem 1rem 0.8rem 0.8rem !important;
+  overflow-x: auto;
+  line-height: 1.6;
+  color: #555;
+  opacity: 0.85;
+  margin: 0.5rem 0;
+}
+
+.cell-output pre {
+  margin-top: 0 !important;
+  margin-bottom: 0.5rem !important;
+  padding: 0.6rem 1rem 0.6rem 0.8rem !important;
+}
+
+pre:hover {
+  opacity: 1;
+  border-left-color: #aaa;
+  transition: opacity 0.2s ease, border-left-color 0.2s ease;
+}
+
+pre::-webkit-scrollbar {
+  height: 3px;
+}
+
+pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+pre::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 0;
+}
+
+code {
+  background-color: rgba(0, 0, 0, 0.04);
+  color: #555;
+  padding: 0.12em 0.38em;
+  border-radius: 0;
+  font-size: 0.76em;
+  border: 1px solid rgba(0,0,0,0.07);
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Code fold toggle */
+details > summary {
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #bbb;
+  cursor: pointer;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  list-style: none;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details > summary::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  border-left: 4.5px solid #ccc;
+  margin-right: 0.5em;
+  margin-bottom: 0.1em;
+  transition: transform 0.2s ease, border-left-color 0.2s ease;
+  vertical-align: middle;
+}
+
+details.is-open > summary::before {
+  transform: rotate(90deg);
+}
+
+details > summary:hover {
+  color: #777;
+}
+
+details > summary:hover::before {
+  border-left-color: #999;
+}
+
+details {
+  margin-bottom: 1rem;
+}
+
+/* Fold animation */
+details > .details-body {
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease;
+}
+
+/* ── Tables ────────────────────────────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.88rem;
+}
+
+th, td {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+th {
+  font-weight: 600;
+  border-bottom: 2px solid #ddd;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.84rem;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── TOC sidebar ──────────────────────────────────────────────────────────── */
+#toc-title {
+  display: none !important;
+}
+
+#quarto-sidebar,
+#quarto-margin-sidebar {
+  font-family: 'Instrument Sans', sans-serif;
+  text-align: left !important;
+  color: #999;
+  padding-left: 1.2rem;
+  padding-right: 0.6rem;
+}
+
+#quarto-sidebar {
+  border-right: none;
+  margin-right: 2.5rem;
+}
+
+#quarto-margin-sidebar {
+  margin-left: 2.5rem;
+  padding-top: 1.5rem;
+}
+
+#TOC, .toc {
+  text-align: left !important;
+  color: #999;
+  letter-spacing: 0.01em;
+  line-height: 1.65;
+}
+
+#TOC a, .toc a,
+#quarto-sidebar a,
+#quarto-margin-sidebar a {
+  color: #aaa;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+/* Base TOC font size (Level 1) */
+.sidebar nav[role=doc-toc] a {
+  font-size: 0.78rem !important;
+}
+
+/* Level 2 TOC items */
+.sidebar nav[role=doc-toc] ul ul a {
+  font-size: 0.7rem !important;
+}
+
+/* Level 3+ TOC items */
+.sidebar nav[role=doc-toc] ul ul ul a {
+  font-size: 0.65rem !important;
+}
+
+#TOC a:hover, .toc a:hover,
+#quarto-sidebar a:hover,
+#quarto-margin-sidebar a:hover {
+  color: #444;
+}
+
+.sidebar nav[role=doc-toc] ul > li > a.active {
+  color: #333;
+  font-weight: 500;
+  border-left-color: #bbb;
+}
+
+.sidebar nav[role=doc-toc] ul > li {
+  margin-bottom: 0.15rem;
+}
+
+.sidebar nav[role=doc-toc] > ul {
+  padding-left: 0;
+}
+
+/* ── Math ──────────────────────────────────────────────────────────────────── */
+.math, mjx-container {
+  font-size: 0.97rem;
+}
+
+/* ── Horizontal rules ─────────────────────────────────────────────────────── */
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 2.5rem 0;
+}
+
+/* ── Remove theme decorations ─────────────────────────────────────────────── */
+.card, .panel, .well {
+  box-shadow: none !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.navbar {
+  box-shadow: none !important;
+  border-bottom: 1px solid #eee;
+}
+
+/* ── Print styles ─────────────────────────────────────────────────────────── */
+@media print {
+  body { font-size: 11pt; }
+  h1 { page-break-before: always; }
+  img { max-width: 100% !important; }
+}
+
+/* ── Code copy subtle animation ───────────────────────────────────────────── */
+.code-copy-button {
+  transition: opacity 0.2s ease !important;
+  opacity: 0 !important;
+}
+.cell:hover .code-copy-button, pre:hover .code-copy-button {
+  opacity: 0.4 !important;
+}
+.code-copy-button:hover {
+  opacity: 0.8 !important;
+  background-color: transparent !important;
+}
+.code-copy-button .bi {
+  transition: none !important;
+  transform: none !important;
+}
+.code-copy-button-tooltip,
+.tippy-box,
+.tippy-popper {
+  display: none !important;
+}
+
+/* ── Image zoom icon ──────────────────────────────────────────────────────── */
+.img-zoom-wrapper {
+  position: relative;
+  display: inline-block;
+}
+.img-zoom-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #555;
+  padding: 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  z-index: 10;
+}
+.img-zoom-wrapper:hover .img-zoom-icon {
+  opacity: 1;
+}
+.img-zoom-icon:hover {
+  background-color: #fff;
+  color: #111;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const images = document.querySelectorAll('.cell-output-display img, .quarto-figure img');
+  images.forEach(img => {
+    // Check if already wrapped
+    if (img.parentElement.classList.contains('img-zoom-wrapper')) return;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'img-zoom-wrapper';
+    
+    img.parentNode.insertBefore(wrapper, img);
+    wrapper.appendChild(img);
+
+    const icon = document.createElement('a');
+    icon.href = '#';
+    icon.title = 'Open image in new tab';
+    icon.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+    icon.onclick = function(e) {
+      e.preventDefault();
+      const w = window.open('');
+      if (w) {
+        w.document.write('<html><head><title>Image View</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;background:#111;height:100vh;overflow:hidden;"><img src="' + img.src + '" style="max-width:100%;max-height:100%;object-fit:contain;"></body></html>');
+        w.document.close();
+      }
+    };
+    
+    icon.className = 'img-zoom-icon';
+    wrapper.appendChild(icon);
+  });
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const titleEl = document.querySelector('.title');
+  if (titleEl) {
+    titleEl.innerHTML = titleEl.innerHTML
+      .replace(/&amp;\s*/g, '&amp;<br>')
+      .replace(/\bOutlier\b/g, '<span style="color:#D81B60">Outlier</span>');
+  }
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("details").forEach(function (det) {
+    var summary = det.querySelector("summary");
+    if (!summary) return;
+
+    // Wrap all non-summary children in a body div for animation
+    var body = document.createElement("div");
+    body.className = "details-body";
+    Array.from(det.children).forEach(function (child) {
+      if (child !== summary) body.appendChild(child);
+    });
+    det.appendChild(body);
+
+    // Set initial state
+    if (!det.open) {
+      body.style.maxHeight = "0px";
+      body.style.opacity = "0";
+    } else {
+      body.style.maxHeight = body.scrollHeight + "px";
+      body.style.opacity = "1";
+      det.classList.add("is-open");
+    }
+
+    summary.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (!det.open) {
+        det.open = true;
+        det.classList.add("is-open");
+        requestAnimationFrame(function () {
+          body.style.maxHeight = body.scrollHeight + "px";
+          body.style.opacity = "1";
+        });
+      } else {
+        det.classList.remove("is-open");
+        body.style.maxHeight = "0px";
+        body.style.opacity = "0";
+        body.addEventListener("transitionend", function handler() {
+          if (body.style.maxHeight === "0px") det.open = false;
+          body.removeEventListener("transitionend", handler);
+        });
+      }
+    });
+  });
+});
+</script>
+
+# Overview
+
+This document performs genetic ancestry visualization and outlier detection to prepare a highly homogeneous Sample set for downstream Genome-Wide Association Studies (GWAS). The main idea is to project TARGET samples onto the 1000 Genomes reference space and determine Outliers based on Samples boundaries.
+
+**Workflow:**
+
+1.  **Prepare Data:** Load PCA scores for the 1000 Genomes reference panel and the projected TARGET samples calculated using [PLINK](https://www.cog-genomics.org/plink/2.0/score#pca_project) `--pca` and `--score` functions.
+2.  **Visualize Ancestry:** Generate scatter plots to confirm where the TARGET samples map relative to global reference populations.
+3.  **Calculate Distances:** Compute robust Mahalanobis distances for each TARGET sample. This relies on the Minimum Covariance Determinant (MCD) to account for cluster shape and direction without being skewed by outliers.
+4.  **Determine Outliers:** Apply Tukey's extreme fence to these distances to objectively identify samples that fall outside the main TARGET cluster core.
+5.  **Export:** Write the flagged outlier IDs to text files for exclusion in subsequent pipeline steps.
+
+# 1. Load & Prepare Data
+
+Read the 1000 Genomes reference data and the projected TARGET samples. Map samples to super-populations (AFR, AMR, EAS, EUR, SAS) to provide a global ancestry context for the TARGET cohort.
+
+```{r libraries}
+library(ggplot2)
+library(MASS)
+library(GGally)
+library(ggnewscale)
+library(patchwork)
+library(robustbase)
+```
+
+```{r load-data}
+# ── Read Eigenval ────────────────────────────────────────────────────────────
+eig <- scan("1kg-pca.eigenval")
+var <- round((eig / sum(eig)) * 100, 2)
+
+pc_labels <- paste0("PC", seq_along(var))
+names(var) <- pc_labels
+
+# ── Read scores ──────────────────────────────────────────────────────────────
+ref <- read.delim("1kg-projected.sscore")
+names(ref)[names(ref) == "X.IID"] <- "IID"
+ref$FID <- ref$IID
+
+proj <- read.delim("target-projected.sscore")
+names(proj)[names(proj) == "X.IID"] <- "IID"
+proj$FID <- proj$IID
+
+# ── Rename PC columns (flip PC1 sign) ───────────────────────────────────────
+pc_cols <- paste0("PC", 1:10)
+
+ref$PC1 <- -ref$PC1_AVG
+ref$PC2 <- ref$PC2_AVG
+for (i in 3:10) ref[[paste0("PC", i)]] <- ref[[paste0("PC", i, "_AVG")]]
+
+proj$PC1 <- -proj$PC1_AVG
+proj$PC2 <- proj$PC2_AVG
+for (i in 3:10) proj[[paste0("PC", i)]] <- proj[[paste0("PC", i, "_AVG")]]
+
+ref$group <- "Reference"
+proj$group <- "Projected"
+```
+
+```{r superpop-mapping}
+# ── Merge with 1KGP pedigree & assign super-populations ─────────────────────
+ped <- read.delim("20130606_g1k.ped")
+ped_subset <- ped[, c("Individual.ID", "Population")]
+
+# ── Super-population mapping ────────────────────────────────────────────────
+sp_levels <- c(
+    "African (AFR)", "Admixed American (AMR)", "East Asian (EAS)",
+    "European (EUR)", "South Asian (SAS)", "TARGET"
+)
+
+assign_superpop <- function(pop) {
+    sp <- rep(NA_character_, length(pop))
+    sp[pop %in% c("ACB", "ASW", "ESN", "GWD", "LWK", "MSL", "YRI")] <- "African (AFR)"
+    sp[pop %in% c("CLM", "MXL", "PEL", "PUR")] <- "Admixed American (AMR)"
+    sp[pop %in% c("CDX", "CHB", "CHS", "JPT", "KHV")] <- "East Asian (EAS)"
+    sp[pop %in% c("CEU", "FIN", "GBR", "IBS", "TSI")] <- "European (EUR)"
+    sp[pop %in% c("BEB", "GIH", "ITU", "PJL", "STU")] <- "South Asian (SAS)"
+    sp[pop == "TARGET"] <- "TARGET"
+    factor(sp, levels = sp_levels)
+}
+
+all_merged <- merge(
+    rbind(
+        ref[, c("FID", "IID", pc_cols, "group")],
+        proj[, c("FID", "IID", pc_cols, "group")]
+    ),
+    ped_subset,
+    by.x = "IID", by.y = "Individual.ID", all.x = TRUE
+)
+all_merged$Population[is.na(all_merged$Population)] <- "TARGET"
+all_merged$SuperPop <- assign_superpop(all_merged$Population)
+
+# Plot TARGET on top
+all_merged <- all_merged[order(all_merged$SuperPop == "TARGET"), ]
+```
+
+# 2. Theme, Palette & Helpers
+
+Define a standard color palette and `ggplot2` themes to ensure consistent visual styling across all plots.
+
+```{r theme-palette}
+# ── Colour palette ──────────────────────────────────────────────────────────
+super_colors <- c(
+    "African (AFR)"          = "#FFC107",
+    "Admixed American (AMR)" = "#5D3A9B",
+    "East Asian (EAS)"       = "#E66100",
+    "European (EUR)"         = "#0C7BDC",
+    "South Asian (SAS)"      = "#000000",
+    "TARGET"                 = "#D81B60"
+)
+
+# ── Shared ggplot theme ─────────────────────────────────────────────────────
+theme_pca <- function(...) {
+    theme_classic(base_size = 13, base_family = "Helvetica") %+replace%
+        theme(
+            panel.grid = element_blank(),
+            axis.line = element_line(color = "#333333", linewidth = 0.5),
+            axis.ticks = element_line(color = "#333333", linewidth = 0.4),
+            axis.text = element_text(color = "#444444", size = 10),
+            axis.title.x = element_text(color = "#222222", size = 11, face = "bold", margin = margin(t = 12)),
+            axis.title.y = element_text(color = "#222222", size = 11, face = "bold", margin = margin(r = 12), angle = 90),
+            plot.title = element_text(
+                face = "bold", size = 17, color = "#111111",
+                margin = margin(b = 7)
+            ),
+            plot.subtitle = element_text(
+                size = 9, color = "#666666",
+                margin = margin(b = 10)
+            ),
+            plot.margin = margin(15, 15, 12, 12),
+            legend.text = element_text(size = 9, color = "#333333"),
+            panel.border = element_blank(),
+            plot.background = element_rect(fill = "white", color = NA),
+            ...
+        )
+}
+
+# Legend inside bottom-right
+theme_legend_inset <- function() {
+    theme(
+        legend.position = c(0.97, 0.035),
+        legend.justification = c("right", "bottom"),
+        legend.background = element_rect(
+            fill = alpha("white", 0.85),
+            color = "#cccccc", linewidth = 0.35
+        ),
+        legend.margin = margin(6, 8, 6, 8),
+        legend.key.size = unit(0.55, "cm"),
+        legend.title = element_blank()
+    )
+}
+```
+
+# 3. Parallel Coordinates (PCs 1–10 by Ancestry)
+
+Visualize how well each PC separates the five 1000 Genomes super-populations. PC1–3 provide clear separation; beyond PC3 the populations increasingly overlap. That's why only the first 3 PCs are usually plotted in Ancestry PCA.
+
+```{r parallel-coordinates}
+#| fig-width: 12
+#| fig-height: 6
+#| fig-cap: "**Figure 1. Parallel coordinates.** 1000 Genomes Sample separation across the first 10 principal components colored by Ancestry."
+pc_para <- all_merged[all_merged$SuperPop != "TARGET", c("IID", pc_cols, "SuperPop")]
+
+p_para <- ggparcoord(
+    data         = pc_para,
+    columns      = which(names(pc_para) %in% pc_cols),
+    groupColumn  = "SuperPop",
+    scale        = "uniminmax",
+    alpha        = 0.25,
+    splineFactor = 0
+) +
+    scale_color_manual(values = super_colors, name = NULL) +
+    scale_x_discrete(labels = pc_cols) +
+    labs(
+        title = "Parallel Coordinates (1000 Genomes)",
+        subtitle = "Each line = one sample · y rescaled [0,1] per PC",
+        x = "PC", y = ""
+    ) +
+    theme_pca(
+        panel.grid.major.x = element_line(color = "#dddddd", linewidth = 0.5),
+        axis.ticks.y       = element_blank(),
+        axis.text.y        = element_blank(),
+        axis.text.x        = element_text(color = "#333333", size = 10, face = "bold"),
+        legend.position    = "right"
+    ) +
+    guides(color = guide_legend(
+        override.aes = list(size = 2.5, alpha = 1, linewidth = 1.5)
+    ))
+
+
+p_para
+```
+
+```{r}
+#| include: false
+ggsave("plots/thesis-parallel-10pcs.svg", p_para, width = 18, height = 8, dpi = 300, bg = "white")
+```
+
+# 4. PCA Scatter Plots
+
+Visualize the principal components to confirm that the reference populations separate as expected, and to see where the TARGET samples project relative to global ancestries.
+
+## 4.1. Set a Function for plotting
+
+```{r pca-scatter-helper}
+# ── Helper function for PCA scatter plots ───────────────────────────────────
+make_pca_scatter <- function(df, xpc, ypc, var, title = NULL, subtitle = NULL) {
+    ggplot(df, aes(x = .data[[xpc]], y = .data[[ypc]], color = SuperPop, shape = SuperPop)) +
+        geom_point(
+            data = subset(df, SuperPop != "TARGET"),
+            size = 2, alpha = 0.8
+        ) +
+        geom_point(
+            data = subset(df, SuperPop == "TARGET"),
+            size = 1.5
+        ) +
+        scale_color_manual(values = super_colors, name = NULL) +
+        scale_shape_manual(
+            values = c(
+                "African (AFR)"          = 16,
+                "Admixed American (AMR)" = 16,
+                "East Asian (EAS)"       = 16,
+                "European (EUR)"         = 16,
+                "South Asian (SAS)"      = 16,
+                "TARGET"                 = 15
+            ),
+            name = NULL
+        ) +
+        labs(
+            title = title,
+            subtitle = subtitle,
+            x = paste0(xpc, " (", var[xpc], "%)"),
+            y = paste0(ypc, " (", var[ypc], "%)")
+        ) +
+        theme_pca() +
+        theme_legend_inset() +
+        guides(
+            color = guide_legend(nrow = 1, override.aes = list(size = 2.5, alpha = 1)),
+            shape = guide_legend(nrow = 1, override.aes = list(size = 2.5, alpha = 1))
+        ) +
+        theme(
+            legend.key.size = unit(0.45, "cm")
+        )
+}
+```
+
+## 4.2. Reference PCA
+
+```{r pca-reference}
+#| fig-width: 14
+#| fig-height: 7
+#| fig-cap: "**Figure 2. Reference ancestry PCA.** Projects 1000 Genomes reference samples on PC1 vs PC2 and PC1 vs PC3."
+# ── Data subsets ────────────────────────────────────────────────────────────
+ref_only <- subset(all_merged, group == "Reference")
+ref_plus_target <- all_merged
+
+# ── Reference-only PCA plots ────────────────────────────────────────────────
+p_ref_12 <- make_pca_scatter(ref_only, "PC1", "PC2", var)
+p_ref_13 <- make_pca_scatter(ref_only, "PC1", "PC3", var)
+
+p_ref_combined <- p_ref_12 + p_ref_13 +
+    plot_layout(ncol = 2, guides = "collect") +
+    plot_annotation(
+        title = "Ancestry PCA",
+        subtitle = "1000 Genomes Reference",
+        tag_levels = "A",
+        theme = theme(
+            plot.title = element_text(
+                face = "bold", size = 17, color = "#111111",
+                hjust = 0.5, margin = margin(b = 4)
+            ),
+            plot.subtitle = element_text(
+                size = 9, color = "#666666",
+                hjust = 0.5, margin = margin(b = 10)
+            )
+        )
+    ) &
+    theme(
+        legend.position = "bottom",
+        legend.box.margin = margin(t = 15)
+    )
+
+p_ref_combined
+```
+
+```{r}
+#| include: false
+ggsave("plots/pca-reference.svg",
+    p_ref_combined,
+    width = 14, height = 7, dpi = 300, bg = "white"
+)
+```
+
+## 4.3. Reference + TARGET PCA
+
+```{r pca-target}
+#| fig-width: 14
+#| fig-height: 7
+#| fig-cap: "**Figure 3. TARGET ancestry PCA.** Projects TARGET samples onto the 1000 Genomes reference space."
+p_target_12 <- make_pca_scatter(ref_plus_target, "PC1", "PC2", var)
+p_target_13 <- make_pca_scatter(ref_plus_target, "PC1", "PC3", var)
+
+p_target_combined <- p_target_12 + p_target_13 +
+    plot_layout(ncol = 2, guides = "collect") +
+    plot_annotation(
+        title = "Ancestry PCA",
+        subtitle = "TARGET samples projected on 1000 Genomes",
+        tag_levels = "A",
+        theme = theme(
+            plot.title = element_text(
+                face = "bold", size = 17, color = "#111111",
+                hjust = 0.5, margin = margin(b = 4)
+            ),
+            plot.subtitle = element_text(
+                size = 9, color = "#666666",
+                hjust = 0.5, margin = margin(b = 10)
+            )
+        )
+    ) &
+    theme(
+        legend.position = "bottom",
+        legend.box.margin = margin(t = 15)
+    )
+
+p_target_combined
+```
+
+```{r}
+#| include: false
+ggsave("plots/pca-target.svg",
+    p_target_combined,
+    width = 14, height = 7, dpi = 300, bg = "white"
+)
+```
+
+## 4.4. All 4 Plots Combined
+
+```{r pca-all-combined}
+#| fig-width: 14
+#| fig-height: 14
+#| fig-cap: "**Figure 4. Ancestry PCA.** 1000 Genomes reference and TARGET projections comparison on PC1 vs PC2 (A|B) &PC1 vs PC3 (C|D)."
+p_all_combined <- (
+    (p_ref_12 + theme(legend.position = "none")) +
+        (p_target_12 + theme(legend.position = "none"))
+) / (
+    (p_ref_13 + theme(legend.position = "none")) +
+        p_target_13
+) +
+    plot_layout(guides = "collect") +
+    plot_annotation(
+        title = "Ancestry PCA",
+        subtitle = "Reference vs Projected",
+        tag_levels = "A",
+        theme = theme(
+            plot.title = element_text(
+                face = "bold", size = 20, color = "#111111",
+                hjust = 0.5, margin = margin(b = 4)
+            ),
+            plot.subtitle = element_text(
+                size = 10, color = "#666666",
+                hjust = 0.5, margin = margin(b = 10)
+            ),
+            legend.position = "bottom",
+            legend.box.margin = margin(t = 15)
+        )
+    )
+
+p_all_combined
+```
+
+```{r}
+#| include: false
+ggsave("plots/thesis-pca-all-combined.svg",
+    p_all_combined,
+    width = 18, height = 16, dpi = 300, bg = "white"
+)
+```
+
+# 5. Mahalanobis Outlier Detection
+
+We project TARGET samples onto the 1000 Genomes reference space to provide sufficient variance for ancestry determination and broad clustering. However, downstream analyses like genome-wide association studies (GWAS) require highly homogeneous sample sets and typically adjust for PCA internally, so the Ancestry (EUR, AFR, ...) is not as relevant as having similar samples.
+
+We therefore use the TARGET cohort itself to define outlier boundaries (the TARGET-self approach). The size and shape of the study cohort determine the thresholds, ensuring maximum internal homogeneity.
+
+> Note: an alternative EUR-reference approach is documented in *Section 9*.
+
+## 5.1. Why Mahalanobis Distance?
+
+Standard outlier detection (like Mean ± 3 SD) assumes data spreads equally in all directions, forming a perfect circle. However, genetic PCA clusters form ellipses because variance differs along each PC and PCs can be correlated. [Mahalanobis](https://dilipkumar.medium.com/mahalanobis-distance-usage-in-machine-learning-2bd4bcacbcd2) distance measures how many standard deviations a point is away from the center, while accounting for the elliptical shape and directional spread (covariance) of the cluster.
+
+> Note: in R, the `mahalanobis()` function returns the **squared** Mahalanobis distance ($D^2$). Our thresholds and plots strictly use this squared distance.
+
+We compute the squared Mahalanobis distances ($D^2$) using two robust statistical methods:
+
+1.  **Minimum Covariance Determinant (MCD)** for the distance calculation.
+2.  **Tukey's extreme fence** for the outlier threshold.
+
+## 5.2. Minimum Covariance Determinant
+
+Standard `cov()` and `colMeans()` use every sample in the data. A few extreme points can pull the center and inflate the covariance, making genuine outliers look closer to the bulk than they are. [MCD](https://wis.kuleuven.be/stat/robust/papers/2010/wire-mcd.pdf) avoids this by finding the subset of samples whose covariance matrix has the smallest determinant. The center and covariance are estimated from that clean subset only. Squared Mahalanobis distances ($D^2$) computed from MCD estimates are more sensitive to real outliers because the reference frame is not warped by them.
+
+We use `robustbase::covMcd()` with `alpha = 0.9` (retains the best 90% of samples for estimation). This preserves legitimate substructure while excluding the most extreme 10% of points from the covariance calculation.
+
+> Note: `alpha` can be adjusted based on Sample size and PCA Scatter Inspection.
+
+## 5.3. Tukey's Extreme Fence
+
+We use Tukey's extreme fence to set the outlier threshold:
+
+$$\text{Threshold} = Q_3 + k \times \text{IQR}$$
+
+where $Q_1$, $Q_3$ are the 25th/75th percentiles of the squared Mahalanobis distances ($D^2$), $\text{IQR} = Q_3 - Q_1$, and $k$ controls stringency. Tukey's Fence Method is:
+
+- **Distribution-free**: assumes no specific distribution.
+- **Robust**: relies on order statistics (quartiles).
+- **Flexible**: adjusts stringency via $k$.
+
+We use $k = 9$ for the TARGET-self approach, which is very conservative and retains internal substructure while only flagging true outliers.
+
+> Note: As $k$ decreases, the fence (i.e., threshold) moves closer to $Q_3$, and more points get labeled as outliers. That makes the rule more stringent.
+
+```{r maha-setup}
+# ── PCs used for Mahalanobis distance ───────────────────────────────────────
+pc_maha <- c("PC1", "PC2")
+
+# ── Tukey fence multipliers ─────────────────────────────────────────────────
+# TARGET-self: k = 9 — very conservative, retains substructure and admixture
+tukey_k_target <- 9
+
+# ── Data subsets ────────────────────────────────────────────────────────────
+target <- subset(all_merged, group == "Projected")
+```
+
+## 5.4. TARGET-self Approach
+
+TARGET samples define their own ellipse using MCD-estimated center and covariance. The threshold is set using Tukey's extreme fence ($Q_3 + 9 \times \text{IQR}$) on the MCD-based squared Mahalanobis distances ($D^2$).
+
+```{r maha-target-self}
+# ── MCD-robust center and covariance for TARGET-self ────────────────────────
+target_mcd <- covMcd(target[, pc_maha], alpha = 0.9)
+target_center <- target_mcd$center
+target_cov <- target_mcd$cov
+
+target$maha_target <- mahalanobis(
+    target[, pc_maha],
+    center = target_center,
+    cov    = target_cov
+)
+
+# ── Tukey extreme fence threshold ───────────────────────────────────────────
+q1_target <- quantile(target$maha_target, 0.25)
+q3_target <- quantile(target$maha_target, 0.75)
+iqr_target <- q3_target - q1_target
+thresh_target <- as.numeric(q3_target + tukey_k_target * iqr_target)
+
+target$is_outlier_target <- target$maha_target > thresh_target
+table(target$is_outlier_target)
+```
+
+## 5.5. Summary
+
+```{r maha-summary}
+#| echo: false
+cat(sprintf(
+    "── TARGET-self approach ────────────────────────────────────────────────────\n  Q1 = %.2f, Q3 = %.2f, IQR = %.2f\n  Threshold: Q3 + %d × IQR = %.2f + %d × %.2f = %.2f\n  Outliers:  %d / %d TARGET samples flagged\n",
+    q1_target, q3_target, iqr_target,
+    tukey_k_target, q3_target, tukey_k_target, iqr_target, thresh_target,
+    sum(target$is_outlier_target), nrow(target)
+))
+```
+
+# 6. Ellipse & Outlier Plot
+
+Draw the calculated Mahalanobis threshold as a strict boundary (ellipse) around the TARGET cluster. Samples falling outside this boundary are flagged as outliers.
+
+```{r ellipse-helper}
+# ── Build Mahalanobis ellipse on PC1/PC2 plane ──────────────────────────────
+make_maha_ellipse <- function(center, cov_mat, threshold) {
+    cov_2d <- cov_mat[c("PC1", "PC2"), c("PC1", "PC2")]
+    cov_eig <- eigen(cov_2d)
+
+    axes <- sqrt(cov_eig$values * threshold)
+    theta <- seq(0, 2 * pi, length.out = 360)
+
+    ell_pts <- t(cov_eig$vectors %*% (axes * rbind(cos(theta), sin(theta))))
+
+    data.frame(
+        PC1 = ell_pts[, 1] + center["PC1"],
+        PC2 = ell_pts[, 2] + center["PC2"]
+    )
+}
+
+ellipse_target <- make_maha_ellipse(target_center, target_cov, thresh_target)
+```
+
+```{r outlier-plot-helper}
+# ── Helper function for Mahalanobis PCA plots ───────────────────────────────
+make_outlier_plot <- function(target_df, ellipse_df, outlier_col, title = NULL, subtitle = NULL, show_target = TRUE, color_outliers = TRUE) {
+    # ── Unified legend levels, colors, and shapes ───────────────────────────
+    all_levels <- c(
+        "African (AFR)", "Admixed American (AMR)", "East Asian (EAS)",
+        "European (EUR)", "South Asian (SAS)",
+        "TARGET", "TARGET Pass", "TARGET Outlier"
+    )
+
+    outlier_colors <- c(
+        "African (AFR)"          = "#FFC107",
+        "Admixed American (AMR)" = "#5D3A9B",
+        "East Asian (EAS)"       = "#E66100",
+        "European (EUR)"         = "#0C7BDC",
+        "South Asian (SAS)"      = "#000000",
+        "TARGET"                 = "#D81B60",
+        "TARGET Pass"            = "#40B0A6",
+        "TARGET Outlier"         = "#D41159"
+    )
+
+    outlier_shapes <- c(
+        "African (AFR)"          = 16,
+        "Admixed American (AMR)" = 16,
+        "East Asian (EAS)"       = 16,
+        "European (EUR)"         = 16,
+        "South Asian (SAS)"      = 16,
+        "TARGET"                 = 15,
+        "TARGET Pass"            = 15,
+        "TARGET Outlier"         = 17
+    )
+
+    # ── Reference data with legend_label column ─────────────────────────────
+    ref_data <- subset(all_merged, group == "Reference")
+    ref_data$legend_label <- factor(as.character(ref_data$SuperPop), levels = all_levels)
+
+    # ── Invisible dummy points for ALL levels (ensures identical guides) ────
+    dummy <- data.frame(
+        PC1 = rep(NA_real_, length(all_levels)),
+        PC2 = rep(NA_real_, length(all_levels)),
+        legend_label = factor(all_levels, levels = all_levels)
+    )
+
+    p <- ggplot() +
+        geom_point(
+            data = dummy,
+            aes(x = PC1, y = PC2, color = legend_label, shape = legend_label),
+            na.rm = TRUE
+        ) +
+        geom_point(
+            data = ref_data,
+            aes(x = PC1, y = PC2, color = legend_label, shape = legend_label),
+            size = 2, alpha = 0.75
+        ) +
+        geom_polygon(
+            data = ellipse_df,
+            aes(x = PC1, y = PC2),
+            fill = "#D41159", color = "#1E1E2E",
+            alpha = 0.10, linewidth = 0.7
+        )
+
+    if (show_target) {
+        if (color_outliers) {
+            pass_df <- target_df[!target_df[[outlier_col]], ]
+            pass_df$legend_label <- factor("TARGET Pass", levels = all_levels)
+            out_df <- target_df[target_df[[outlier_col]], ]
+            out_df$legend_label <- factor("TARGET Outlier", levels = all_levels)
+
+            p <- p +
+                geom_point(
+                    data = pass_df,
+                    aes(x = PC1, y = PC2, color = legend_label, shape = legend_label),
+                    size = 1.5
+                ) +
+                geom_point(
+                    data = out_df,
+                    aes(x = PC1, y = PC2, color = legend_label, shape = legend_label),
+                    size = 1.8
+                )
+        } else {
+            tgt_df <- target_df
+            tgt_df$legend_label <- factor("TARGET", levels = all_levels)
+
+            p <- p +
+                geom_point(
+                    data = tgt_df,
+                    aes(x = PC1, y = PC2, color = legend_label, shape = legend_label),
+                    size = 1.5
+                )
+        }
+    }
+
+    p +
+        scale_color_manual(values = outlier_colors, drop = FALSE, name = NULL) +
+        scale_shape_manual(values = outlier_shapes, drop = FALSE, name = NULL) +
+        labs(
+            title = title,
+            subtitle = subtitle,
+            x = paste0("PC1 (", var["PC1"], "%)"),
+            y = paste0("PC2 (", var["PC2"], "%)")
+        ) +
+        theme_pca() +
+        theme_legend_inset() +
+        guides(
+            color = guide_legend(nrow = 1, override.aes = list(size = 2.5, alpha = 1)),
+            shape = guide_legend(nrow = 1, override.aes = list(size = 2.5, alpha = 1))
+        )
+}
+```
+
+```{r outlier-target}
+#| fig-width: 14
+#| fig-height: 7
+#| fig-cap: "**Figure 5. TARGET-self outliers.** Identifies outliers based on the TARGET cohort covariance ellipse."
+p_out_target_all <- make_outlier_plot(
+    target_df = target,
+    ellipse_df = ellipse_target,
+    outlier_col = "is_outlier_target",
+    show_target = TRUE,
+    color_outliers = FALSE
+)
+
+p_out_target <- make_outlier_plot(
+    target_df = target,
+    ellipse_df = ellipse_target,
+    outlier_col = "is_outlier_target",
+    show_target = TRUE,
+    color_outliers = TRUE
+)
+
+p_out_target_combined <-
+    (p_out_target_all + theme(legend.position = "none")) +
+    p_out_target +
+    plot_layout(ncol = 2, guides = "collect") +
+    plot_annotation(
+        title = "Mahalanobis Outlier Detection (TARGET-self)",
+        subtitle = sprintf("Tukey fence: Q3 + %d \u00d7 IQR = %.2f  (MCD covariance)", tukey_k_target, thresh_target),
+        tag_levels = "A",
+        theme = theme(
+            plot.title = element_text(
+                face = "bold", size = 16, color = "#111111",
+                hjust = 0.5, margin = margin(b = 4)
+            ),
+            plot.subtitle = element_text(
+                size = 9, color = "#666666",
+                hjust = 0.5, margin = margin(b = 10)
+            ),
+            legend.position = "bottom",
+            legend.box.margin = margin(t = 15)
+        )
+    )
+
+p_out_target_combined
+```
+
+```{r}
+#| include: false
+#| 
+ggsave("plots/pca-outliers-target.svg",
+    p_out_target_combined,
+    width = 14, height = 7, dpi = 300, bg = "white"
+)
+```
+
+# 7. Mahalanobis Lollipop Plot
+
+Visualize the distance of every individual sample from the cluster center. The dashed line marks Tukey's Fence threshold. Samples above the line are flagged as outliers.
+
+```{r lollipop-helper}
+# ── Helper function: ranked Mahalanobis distance lollipop plot ──────────────
+make_lollipop_plot <- function(df, distance_col, outlier_col, threshold,
+                               thresh_label, title = NULL, subtitle = NULL) {
+    # Order samples by Mahalanobis distance
+    df_ordered <- df[order(df[[distance_col]]), ]
+    df_ordered$sample_rank <- seq_len(nrow(df_ordered))
+
+    # Create clean labels for plotting
+    df_ordered$outlier_status <- factor(
+        ifelse(df_ordered[[outlier_col]], "Outlier", "Pass"),
+        levels = c("Pass", "Outlier")
+    )
+
+    # Avoid drawing from zero on a log10 axis
+    min_positive <- min(df_ordered[[distance_col]][df_ordered[[distance_col]] > 0], na.rm = TRUE)
+    y_start <- min_positive / 2
+
+    ggplot(
+        df_ordered,
+        aes(x = sample_rank, y = .data[[distance_col]], color = outlier_status)
+    ) +
+        annotate(
+            "rect",
+            xmin = -Inf, xmax = Inf,
+            ymin = threshold, ymax = Inf,
+            fill = "#D41159", alpha = 0.04
+        ) +
+        annotate(
+            "rect",
+            xmin = -Inf, xmax = Inf,
+            ymin = y_start, ymax = threshold,
+            fill = "#40B0A6", alpha = 0.04
+        ) +
+        geom_hline(
+            yintercept = threshold,
+            color = "#D41159",
+            linetype = "dashed",
+            linewidth = 0.9
+        ) +
+        geom_segment(
+            aes(xend = sample_rank, y = y_start, yend = .data[[distance_col]]),
+            linewidth = 0.3,
+            alpha = 0.5
+        ) +
+        geom_point(size = 1.8, alpha = 0.85) +
+        annotate(
+            "text",
+            x = nrow(df_ordered) * 0.02,
+            y = threshold,
+            label = thresh_label,
+            color = "#CC0000",
+            hjust = 0.3,
+            vjust = 2.5,
+            size = 3
+        ) +
+        scale_y_log10(
+            breaks = c(1, 5, round(threshold, 1), 50, 100, 500, 1000, 5000),
+            labels = function(x) round(x, 1)
+        ) +
+        scale_color_manual(
+            values = c("Pass" = "#40B0A6", "Outlier" = "#D41159"),
+            labels = c(
+                "Pass"    = sprintf("Pass (n=%d)", sum(!df[[outlier_col]])),
+                "Outlier" = sprintf("Outlier (n=%d)", sum(df[[outlier_col]]))
+            ),
+            name = NULL
+        ) +
+        labs(
+            title = title,
+            subtitle = subtitle,
+            x = "Samples ranked by Mahalanobis distance",
+            y = "Mahalanobis distance\u00b2 (log10)"
+        ) +
+        theme_pca(
+            panel.grid.major.y = element_line(color = "#eeeeee", linewidth = 0.4),
+            axis.ticks.x = element_blank(),
+            axis.text.x = element_blank(),
+            legend.position = c(0.02, 0.97),
+            legend.justification = c("left", "top"),
+            legend.background = element_rect(
+                fill = alpha("white", 0.85),
+                color = "#cccccc",
+                linewidth = 0.35
+            ),
+            legend.margin = margin(6, 8, 6, 8)
+        )
+}
+```
+
+```{r lollipop-plot-target}
+#| fig-width: 10
+#| fig-height: 7
+#| fig-cap: "**Figure 6. TARGET-self distances.** Ranks TARGET samples by Mahalanobis distance to identify outliers."
+# ── TARGET-self lollipop plot ──────────────────────────────────────────────
+lollipop_target <- make_lollipop_plot(
+    df           = target,
+    distance_col = "maha_target",
+    outlier_col  = "is_outlier_target",
+    threshold    = thresh_target,
+    thresh_label = sprintf("Tukey Cutoff (Q3 + %d·IQR)", tukey_k_target),
+    title        = "Mahalanobis Distance per Sample",
+    subtitle     = "TARGET-self approach"
+)
+
+lollipop_target
+```
+
+```{r}
+#| include: false
+ggsave("plots/maha-lollipop-target.svg",
+    lollipop_target,
+    width = 10, height = 7, dpi = 300, bg = "white"
+)
+```
+
+## 7.1. Combined Outliers Plot
+
+```{r thesis-final-plot}
+#| fig-width: 18
+#| fig-height: 8
+#| fig-cap: "**Figure 7. Genetic ancestry outliers.** Mahalanobis distance ranking (A) and PCA scatter plot (B) for TARGET outlier detection."
+# ── Final combined plot ──────────────────────────────────────────
+# Remove titles and subtitles from individual plots
+p_left_clean <- lollipop_target + labs(title = NULL, subtitle = NULL)
+
+p_right_clean <- p_out_target +
+    labs(title = NULL, subtitle = NULL) +
+    theme_legend_inset() +
+    theme(
+        legend.position = c(0.97, 0.97),
+        legend.justification = c("right", "top")
+    ) +
+    scale_color_manual(
+        values = c(
+            "African (AFR)" = "#FFC107", "Admixed American (AMR)" = "#5D3A9B",
+            "East Asian (EAS)" = "#E66100", "European (EUR)" = "#0C7BDC",
+            "South Asian (SAS)" = "#000000", "TARGET Pass" = "#40B0A6",
+            "TARGET Outlier" = "#D41159"
+        ),
+        breaks = c(
+            "African (AFR)", "Admixed American (AMR)", "East Asian (EAS)",
+            "European (EUR)", "South Asian (SAS)", "TARGET Pass", "TARGET Outlier"
+        ),
+        name = NULL
+    ) +
+    scale_shape_manual(
+        values = c(
+            "African (AFR)" = 16, "Admixed American (AMR)" = 16,
+            "East Asian (EAS)" = 16, "European (EUR)" = 16,
+            "South Asian (SAS)" = 16, "TARGET Pass" = 15,
+            "TARGET Outlier" = 17
+        ),
+        breaks = c(
+            "African (AFR)", "Admixed American (AMR)", "East Asian (EAS)",
+            "European (EUR)", "South Asian (SAS)", "TARGET Pass", "TARGET Outlier"
+        ),
+        name = NULL
+    ) +
+    guides(
+        color = guide_legend(ncol = 2, override.aes = list(size = 2.5, alpha = 1)),
+        shape = guide_legend(ncol = 2, override.aes = list(size = 2.5, alpha = 1))
+    )
+
+p_pca_outliers <- p_left_clean + p_right_clean +
+    plot_layout(ncol = 2) +
+    plot_annotation(
+        title = "Genetic Ancestry Outliers",
+        subtitle = sprintf("Filtered using Mahalanobis distances (Tukey's extreme fence, k=%d)", tukey_k_target),
+        tag_levels = "A",
+        theme = theme(
+            plot.title = element_text(
+                face = "bold", size = 20, color = "#111111",
+                hjust = 0.5, margin = margin(b = 6)
+            ),
+            plot.subtitle = element_text(
+                size = 10, color = "#555555",
+                hjust = 0.5, margin = margin(b = 18)
+            ),
+            plot.tag = element_text(
+                size = 22, face = "bold", color = "#111111"
+            )
+        )
+    )
+
+p_pca_outliers
+```
+
+```{r}
+#| include: false
+ggsave("plots/thesis-pca-outliers.svg",
+    p_pca_outliers,
+    width = 18, height = 8, dpi = 300, bg = "white"
+)
+```
+
+# 8. Export Outliers
+
+Write the IDs of the identified outlier samples to a plain text file. This file is used in downstream pipeline steps to exclude these samples from the final dataset.
+
+> Note: The outliers file is adapted for *PLINK* sample removal with *FID* and *IID* columns.
+
+```{r export-outliers}
+# ── Samples excluded using TARGET-self Mahalanobis approach ─────────────
+outliers_target_self <- subset(target, is_outlier_target)[, c("FID", "IID")]
+
+write.table(
+    outliers_target_self,
+    "samples-by-pca-target.txt",
+    col.names = FALSE,
+    row.names = FALSE,
+    quote = FALSE,
+    sep = "\t"
+)
+
+cat(sprintf(
+    "TARGET-self: %d outliers written to samples-by-pca-target.txt\n",
+    nrow(outliers_target_self)
+))
+```
+
+# 9. Alternative Approach: EUR-Reference
+
+An alternative approach is to use the 1000 Genomes European (or Ancestry of choice) cluster to define outlier boundaries. A TARGET sample is excluded if its MCD-based squared Mahalanobis distance ($D^2$) from the EUR reference cluster exceeds Tukey's fence.
+
+> Note: This is documented for Ancestry reproducibility, though the primary and recommended approach uses the TARGET cohort directly for downstream homogeneity.
+
+```{r maha-eur-setup}
+# ── Tukey fence multiplier for EUR ──────────────────────────────────────────
+# k = 3 — flags samples clearly outside the European cluster
+tukey_k_eur <- 3
+
+# ── Data subset for EUR reference ───────────────────────────────────────────
+ref_eur <- subset(all_merged, group == "Reference" & SuperPop == "European (EUR)")
+```
+
+```{r maha-eur-reference}
+# ── MCD-robust center and covariance for EUR reference ──────────────────────
+eur_mcd <- covMcd(ref_eur[, pc_maha], alpha = 0.9)
+eur_center <- eur_mcd$center
+eur_cov <- eur_mcd$cov
+
+# Mahalanobis distances for EUR reference samples
+ref_eur$maha_ref_eur <- mahalanobis(
+    ref_eur[, pc_maha],
+    center = eur_center,
+    cov    = eur_cov
+)
+
+# Mahalanobis distances for TARGET samples relative to EUR reference
+target$maha_ref_eur <- mahalanobis(
+    target[, pc_maha],
+    center = eur_center,
+    cov    = eur_cov
+)
+
+# ── Tukey fence threshold on EUR-reference distances ────────────────────────
+q1_eur <- quantile(target$maha_ref_eur, 0.25)
+q3_eur <- quantile(target$maha_ref_eur, 0.75)
+iqr_eur <- q3_eur - q1_eur
+thresh_eur <- as.numeric(q3_eur + tukey_k_eur * iqr_eur)
+
+target$is_outlier_ref_eur <- target$maha_ref_eur > thresh_eur
+```
+
+## 9.1. EUR-Reference Summary
+
+```{r maha-eur-summary}
+#| echo: false
+cat(sprintf(
+    "── EUR-reference approach ──────────────────────────────────────────────────\n  Q1 = %.2f, Q3 = %.2f, IQR = %.2f\n  Threshold: Q3 + %d × IQR = %.2f + %d × %.2f = %.2f\n  Outliers:  %d / %d TARGET samples flagged\n",
+    q1_eur, q3_eur, iqr_eur,
+    tukey_k_eur, q3_eur, tukey_k_eur, iqr_eur, thresh_eur,
+    sum(target$is_outlier_ref_eur), nrow(target)
+))
+```
+
+## 9.2. EUR-Reference Ellipse Plots
+
+```{r outlier-eur}
+#| fig-width: 14
+#| fig-height: 7
+#| fig-cap: "**Figure 8. EUR-reference outliers.** Identifies TARGET outliers based on the European reference covariance ellipse."
+ellipse_ref_eur <- make_maha_ellipse(eur_center, eur_cov, thresh_eur)
+
+p_out_ref_eur_no_target <- make_outlier_plot(
+    target_df   = target,
+    ellipse_df  = ellipse_ref_eur,
+    outlier_col = "is_outlier_ref_eur",
+    show_target = FALSE
+)
+
+p_out_ref_eur <- make_outlier_plot(
+    target_df   = target,
+    ellipse_df  = ellipse_ref_eur,
+    outlier_col = "is_outlier_ref_eur"
+)
+
+p_out_eur_combined <-
+    (p_out_ref_eur_no_target + theme(legend.position = "none")) +
+    p_out_ref_eur +
+    plot_layout(ncol = 2, guides = "collect") +
+    plot_annotation(
+        title = "Mahalanobis Outlier Detection (EUR Reference)",
+        subtitle = sprintf("Tukey fence: Q3 + %d \u00d7 IQR = %.2f  (MCD covariance)", tukey_k_eur, thresh_eur),
+        tag_levels = "A",
+        theme = theme(
+            plot.title = element_text(
+                face = "bold", size = 16, color = "#111111",
+                hjust = 0.5, margin = margin(b = 4)
+            ),
+            plot.subtitle = element_text(
+                size = 9, color = "#666666",
+                hjust = 0.5, margin = margin(b = 10)
+            ),
+            legend.position = "bottom",
+            legend.box.margin = margin(t = 15)
+        )
+    )
+
+p_out_eur_combined
+```
+
+```{r}
+#| include: false
+ggsave("plots/pca-outliers-eur.svg",
+    p_out_eur_combined,
+    width = 14, height = 7, dpi = 300, bg = "white"
+)
+```
+
+## 9.3. EUR-Reference Lollipop Plot
+
+```{r lollipop-plot-eur}
+#| fig-width: 10
+#| fig-height: 7
+#| fig-cap: "**Figure 9. EUR-reference distances.** Ranks TARGET samples by Mahalanobis distance to the European reference."
+lollipop_ref_eur <- make_lollipop_plot(
+    df           = target,
+    distance_col = "maha_ref_eur",
+    outlier_col  = "is_outlier_ref_eur",
+    threshold    = thresh_eur,
+    thresh_label = sprintf("Tukey Cutoff (Q3 + %d·IQR)", tukey_k_eur),
+    title        = "Mahalanobis Distance per Sample",
+    subtitle     = "EUR-Reference approach"
+)
+
+lollipop_ref_eur
+```
+
+```{r}
+#| include: false
+ggsave("plots/maha-lollipop-eur.svg",
+    lollipop_ref_eur,
+    width = 10, height = 7, dpi = 300, bg = "white"
+)
+```
+
+## 9.4. Export EUR-Reference Outliers
+
+```{r export-outliers-eur}
+outliers_ref_eur <- subset(target, is_outlier_ref_eur)[, c("FID", "IID")]
+
+write.table(
+    outliers_ref_eur,
+    "samples-by-pca-eur.txt",
+    col.names = FALSE,
+    row.names = FALSE,
+    quote = FALSE,
+    sep = "\t"
+)
+
+cat(sprintf(
+    "EUR-reference: %d outliers written to samples-by-pca-eur.txt\n",
+    nrow(outliers_ref_eur)
+))
+```
+
+# Future Work
+
+I am currently developing a *Shiny app* to automate the entire PCA and outlier detection pipeline, from just your `plink` or `vcf` genotype data.
+
+<br><br>
+<hr style="border: 0; width: 80%; height: 1px; background: linear-gradient(to right, transparent, #242323ff 25%, #242323ff 75%, transparent); margin: 2.5rem auto; opacity: 1;">
+<div style="text-align: center; color: #979797ff; font-size: 0.85rem; padding-bottom: 10vh;">
+  <em>Thanks for Reading this far, Stay tuned: [github.com/BioInUmer](https://github.com/BioInUmer) ! </em>
+</div>
