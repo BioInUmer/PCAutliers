@@ -1,10 +1,6 @@
 <h1 align="center">Ancestry PCA & Outlier Detection</h1>
 
 <p align="center">
-  <b>Genetic ancestry visualization and Outlier detection pipeline</b>
-</p>
-
-<p align="center">
   <img width="350" height="280" alt="Image" src="https://github.com/user-attachments/assets/df1b6a45-c727-4b0a-a84b-1b4d481399ee" />
 </p>
 
